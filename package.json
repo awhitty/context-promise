@@ -9,8 +9,39 @@
   },
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "webpack --config build.webpack.config.js",
+    "smoke:ts": "tsc --noEmit --pretty --project ./src/tsconfig.json",
+    "test": "jest",
+    "watchtest": "jest --watch",
+    "watch": "webpack --config build.webpack.config.js --watch"
   },
   "keywords": [],
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^20.0.7",
+    "@types/when": "^2.4.29",
+    "jest": "^20.0.4",
+    "ts-jest": "^20.0.10",
+    "ts-loader": "^2.3.3",
+    "typescript": "^2.4.2",
+    "webpack": "^3.5.5",
+    "when": "^3.7.8"
+  },
+  "jest": {
+    "transform": {
+      ".(ts|tsx)": "<rootDir>/node_modules/ts-jest/preprocessor.js"
+    },
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
+    "moduleFileExtensions": [
+      "ts",
+      "tsx",
+      "js",
+      "json"
+    ],
+    "globals": {
+      "ts-jest": {
+        "tsConfigFile": "./src/tsconfig.json"
+      }
+    }
+  }
 }
