@@ -1,0 +1,16 @@
+{
+  "name": "context-promise",
+  "version": "0.0.0-semantic-release",
+  "description": "Chain promises without pulling hairs.",
+  "author": {
+    "name": "Austin Whittier",
+    "email": "austin.whitt+npm@gmail.com",
+    "url": "http://awhitty.me/"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "license": "MIT"
+}
