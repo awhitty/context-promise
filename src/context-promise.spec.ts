@@ -1,30 +1,35 @@
-import { ContextPromise } from './context-promise';
+import { ContextPromise } from "./context-promise";
 
-it('ContextPromise is defined', () => {
+it("ContextPromise is defined", () => {
   expect(ContextPromise).toBeTruthy();
 });
 
-// it('Full context is passed to promise', () => {
-//   const context = {
-//     a: 123,
-//     b: 'howdy!',
-//     c: () => 'yo',
-//   };
+it("Basic promise", () => {
+  const p = new ContextPromise(Promise.resolve({ greeting: "howdy" }));
+  return expect(p).resolves.toEqual({ greeting: "howdy" });
+});
 
-//   new ContextPromise(context)
-//     .then(c => {
-//       expect(c).toEqual(context);
-//       expect(c).not.toBe(context);
-//     })
-// })
+it("Basic chaining", () => {
+  const p = new ContextPromise(
+    Promise.resolve({ greeting: "howdy" })
+  ).then(c => ({ greets: c.greeting }));
 
-it.only('dev', () => {
-  const promptZip = () => Promise.resolve({ zip: 12345 });
-  // const getTemperature = (zip: number) => Promise.resolve(30);
-  // const getRainy = (zip: number) => Promise.resolve(true);
+  return expect(p).resolves.toEqual({ greeting: "howdy", greets: "howdy" });
+});
 
-  new ContextPromise({})
-    .then(c => promptZip())
-    .then(c => console.log(c))
-    .then(c => console.log('again', c))
-})
+it("Raining example", () => {
+  const promptZip = () => Promise.resolve("94107");
+  const getTemp = (zip: string) => Promise.resolve(50);
+  const getRain = (zip: string) => Promise.resolve(true);
+  const shouldWearJacket = (temp: number, raining: boolean) => {
+    return temp <= 50 || raining;
+  };
+
+  const p = new ContextPromise(promptZip().then(zip => ({ zip })))
+    .then(c => getTemp(c.zip).then(temp => ({ temp })))
+    .then(c => getRain(c.zip).then(rain => ({ rain })))
+    .then(c => ({ should: shouldWearJacket(c.temp, c.rain) }));
+
+  return expect(p).resolves.toHaveProperty("should");
+});
+
