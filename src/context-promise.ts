@@ -1,4 +1,8 @@
-function isPojo(obj: any): obj is { [k: string]: any } {
+export type PromiseBag<Result> = {
+  [k in keyof Result]: Result[k] | PromiseLike<Result[k]>
+};
+
+function isPromiseBag<T>(obj: any): obj is PromiseBag<T> {
   if (obj === null || typeof obj !== 'object') {
     return false;
   }
@@ -12,42 +16,54 @@ class ContextPromise<C = {}, U = {}> implements PromiseLike<C & U> {
     this.contextProvider = Promise.resolve(value);
   }
 
-  /** Bag */
-  then<TResult1 = U, TResult2 = never>(
-    onfulfilled?: (
-      value: C,
-    ) => { [k in keyof TResult1]: PromiseLike<TResult1[k]> | TResult1[k] },
-    onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>),
-  ): ContextPromise<C & TResult1>;
-
   /** Named */
   then<K extends string, TResult1 = U, TResult2 = never>(
     key: K,
-    onfulfilled?: ((value: C) => TResult1 | PromiseLike<TResult1>),
+    onfulfilled: ((value: C) => TResult1 | PromiseLike<TResult1>),
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>),
   ): ContextPromise<C & { [k in K]: TResult1 }>;
 
-  then(A: any, B: any, C: any): any {
+  /** Bag or basic */
+  then<TResult1 = U, TResult2 = never>(
+    onfulfilled: (value: C) => PromiseBag<TResult1> | PromiseLike<TResult1>,
+    onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>),
+  ): ContextPromise<C & TResult1>;
+
+  then(A?: any, B?: any, C?: any): any {
     if (typeof A === 'string') {
-      return this.thenNamed(A, B, C);
+      return this.keyedThen(A, B, C);
     } else {
-      return this.thenBag(A, B);
+      return this.realThen(A, B);
     }
   }
 
-  private thenBag<TResult1 = U, TResult2 = never>(
-    onfulfilled?: (
-      value: C,
-    ) => { [k in keyof TResult1]: PromiseLike<TResult1[k]> | TResult1[k] },
+  tap(onfulfilled: (value: C) => void): ContextPromise<C> {
+    return new ContextPromise(new Promise((resolve, reject) => {
+      this.contextProvider.then((c: C) => {
+        try {
+          onfulfilled(c);
+        } catch (e) {
+          reject(c);
+          return;
+        }
+        resolve(c);
+      }, reject);
+    }));
+  }
+
+  private realThen<TResult1 = U, TResult2 = never>(
+    onfulfilled: (value: C) => PromiseBag<TResult1> | PromiseLike<TResult1>,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>),
   ): ContextPromise<C & TResult1> {
     return new ContextPromise(
       new Promise((resolve, reject) => {
         this.contextProvider.then((c: C) => {
-          const promises = onfulfilled(c);
-          if (isPojo(promises)) {
-            const transformed = Object.keys(promises).map(k => {
-              return Promise.resolve(promises[k]).then(tk => ({ [k]: tk }));
+          const contextualResults = onfulfilled(c);
+          if (isPromiseBag<TResult1>(contextualResults)) {
+            const transformed = Object.keys(contextualResults).map(k => {
+              return Promise.resolve(contextualResults[k]).then(tk => ({
+                [k]: tk,
+              }));
             });
 
             Promise.all(transformed)
@@ -56,29 +72,29 @@ class ContextPromise<C = {}, U = {}> implements PromiseLike<C & U> {
               })
               .catch(reject);
           } else {
-            resolve(Object.assign({}, c));
+            Promise.resolve(contextualResults)
+              .then(value => resolve(Object.assign({}, c, value)))
+              .catch(reject);
           }
         });
       }),
     );
   }
 
-  private thenNamed<TResult1 = U, TResult2 = never, K extends string>(
+  private keyedThen<K extends string, TResult1 = U, TResult2 = never>(
     key: K,
-    onfulfilled?: ((value: C) => TResult1 | PromiseLike<TResult1>),
+    onfulfilled: ((value: C) => TResult1 | PromiseLike<TResult1>),
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>),
   ): ContextPromise<C & { [k in K]: TResult1 }> {
     return new ContextPromise(
       new Promise((resolve, reject) => {
-        this.contextProvider
-          .then((c: C) => {
-            Promise.resolve(onfulfilled(c))
-              .then((u: TResult1) => {
-                resolve(Object.assign({}, c, { [key]: u }));
-              })
-              .catch(reject);
-          })
-          .catch(reject);
+        this.contextProvider.then((c: C) => {
+          Promise.resolve(onfulfilled(c))
+            .then((u: TResult1) => {
+              resolve(Object.assign({}, c, { [key]: u }));
+            })
+            .catch(reject);
+        }, reject);
       }),
     );
   }

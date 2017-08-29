@@ -31,7 +31,12 @@ describe('Basic', () => {
       .then(c => getRain(c.zip).then(rain => ({ rain })))
       .then(c => ({ should: shouldWearJacket(c.temp, c.rain) }));
 
-    return expect(p).resolves.toHaveProperty('should');
+    return expect(p).resolves.toEqual({
+      zip: '94107',
+      temp: 50,
+      rain: true,
+      should: true,
+    });
   });
 });
 
@@ -40,7 +45,7 @@ describe('Named input', () => {
     const p = new ContextPromise(Promise.resolve({ greeting: 'howdy' })).then(
       'greets',
       c => c.greeting,
-    );
+    ).then(c => console.log);
 
     return expect(p).resolves.toEqual({ greeting: 'howdy', greets: 'howdy' });
   });
