@@ -99,7 +99,10 @@ class ContextPromise<C = {}, U = {}> implements PromiseLike<C & U> {
       this.contextProvider.then((c: C) => {
         Promise.resolve(onfulfilled(c))
           .then((u: TResult1) => {
-            resolve(Object.assign({}, c, { [key]: u }));
+            // :KLUDGE: This function's type annotations rely on this one
+            // :weird trick (`K extends string`). The `as any`s are here to
+            // :quiet the compiler.
+            resolve(Object.assign({}, c, { [key as any]: u } as any));
           })
           .catch(reject);
       }, reject);
