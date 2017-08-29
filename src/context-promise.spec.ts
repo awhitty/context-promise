@@ -6,12 +6,14 @@ it('ContextPromise is defined', () => {
 
 describe('Basic', () => {
   it('Basic promise', () => {
-    const p = new ContextPromise(Promise.resolve({ greeting: 'howdy' }));
+    const p = ContextPromise.fromPromise(
+      Promise.resolve({ greeting: 'howdy' }),
+    );
     return expect(p).resolves.toEqual({ greeting: 'howdy' });
   });
 
   it('Basic chaining', () => {
-    const p = new ContextPromise(
+    const p = ContextPromise.fromPromise(
       Promise.resolve({ greeting: 'howdy' }),
     ).then(c => ({ greets: c.greeting }));
 
@@ -26,7 +28,7 @@ describe('Basic', () => {
       return temp <= 50 || raining;
     };
 
-    const p = new ContextPromise(promptZip().then(zip => ({ zip })))
+    const p = ContextPromise.fromPromise(promptZip().then(zip => ({ zip })))
       .then(c => getTemp(c.zip).then(temp => ({ temp })))
       .then(c => getRain(c.zip).then(rain => ({ rain })))
       .then(c => ({ should: shouldWearJacket(c.temp, c.rain) }));
@@ -42,10 +44,9 @@ describe('Basic', () => {
 
 describe('Named input', () => {
   it('Basic chaining', () => {
-    const p = new ContextPromise(Promise.resolve({ greeting: 'howdy' })).then(
-      'greets',
-      c => c.greeting,
-    ).then(c => console.log);
+    const p = ContextPromise.fromPromise(Promise.resolve({ greeting: 'howdy' }))
+      .then('greets', c => c.greeting)
+      .then(c => console.log);
 
     return expect(p).resolves.toEqual({ greeting: 'howdy', greets: 'howdy' });
   });
@@ -64,7 +65,7 @@ describe('Bag', () => {
       return temp <= 50 && raining;
     };
 
-    const p = new ContextPromise(promptZip().then(zip => ({ zip })))
+    const p = ContextPromise.fromPromise(promptZip().then(zip => ({ zip })))
       .then(c => ({
         temp: getTemp(c.zip),
         rain: getRain(c.zip),
@@ -88,7 +89,7 @@ describe('Bag', () => {
       });
     };
 
-    const p = new ContextPromise(
+    const p = ContextPromise.fromPromise(
       getTemp('94107').then(temp => ({ tempResponse: temp })),
     );
 
