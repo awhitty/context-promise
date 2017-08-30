@@ -100,3 +100,96 @@ describe('Bag', () => {
     });
   });
 });
+
+describe('Tap', () => {
+  it('should allow tapping into context', done => {
+    ContextPromise.fromPromise(Promise.resolve({ phrase: 'yolo' })).tap(c => {
+      expect(c).toEqual({ phrase: 'yolo' });
+      done();
+    });
+  });
+
+  it('should handle error after tap', done => {
+    const spy = jest.fn();
+    ContextPromise.fromPromise(Promise.resolve({ phrase: 'yolo' }))
+      .tap(c => {
+        throw new Error('Arbitrary error');
+      })
+      .then(spy, e => {
+        expect(spy.mock.calls.length).toEqual(0);
+        expect(e).toEqual(new Error('Arbitrary error'));
+        done();
+      });
+  });
+});
+
+describe('Error handling', () => {
+  it('should handle rejection from constructor', () => {
+    const p = new ContextPromise((resolve, reject) => {
+      reject(new Error('Arbitrary error'));
+    });
+
+    return expect(p).rejects.toEqual(new Error('Arbitrary error'));
+  });
+
+  it('should reject as second parameter to then', done => {
+    const p = ContextPromise.fromPromise(Promise.resolve({ phrase: 'yolo' }))
+      .then(c => {
+        throw new Error('Arbitrary error');
+      })
+      .then(
+        c => ({}),
+        e => {
+          expect(e).toEqual(new Error('Arbitrary error'));
+          done();
+        },
+      );
+  });
+
+  it('should handle rejection after then', () => {
+    const p = ContextPromise.fromPromise(
+      Promise.resolve({ phrase: 'yolo' }),
+    ).then(c => {
+      throw new Error('Arbitrary error');
+    });
+
+    return expect(p).rejects.toEqual(new Error('Arbitrary error'));
+  });
+
+  it('should handle rejection with keyed then', () => {
+    const p = ContextPromise.fromPromise(
+      Promise.resolve({ phrase: 'yolo' }),
+    ).then('someKey', c => {
+      throw new Error('Arbitrary error');
+    });
+
+    return expect(p).rejects.toEqual(new Error('Arbitrary error'));
+  });
+
+  it('should handle rejection inside PromiseBag', () => {
+    const p = ContextPromise.fromPromise(
+      Promise.resolve({ phrase: 'yolo' }),
+    ).then(c => ({
+      noError: 'pleasantly fine',
+      someError: Promise.reject(new Error('Arbitrary error')),
+      noOtherError: 'chillin here',
+    }));
+
+    return expect(p).rejects.toEqual(new Error('Arbitrary error'));
+  });
+
+  it('should not fire subsequent thens', done => {
+    const spy = jest.fn();
+
+    const p = ContextPromise.fromPromise(Promise.resolve({ phrase: 'yolo' }))
+      .then(c => ({
+        noError: 'pleasantly fine',
+        someError: Promise.reject(new Error('Arbitrary error')),
+        noOtherError: 'chillin here',
+      }))
+      .then(spy as any, () => {
+        expect(spy.mock.calls.length).toEqual(0);
+        done();
+      });
+  });
+});

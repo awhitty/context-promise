@@ -54,7 +54,7 @@ class ContextPromise<C = {}, U = {}> implements PromiseLike<C & U> {
         try {
           onfulfilled(c);
         } catch (e) {
-          reject(c);
+          reject(e);
           return;
         }
         resolve(c);
@@ -68,7 +68,14 @@ class ContextPromise<C = {}, U = {}> implements PromiseLike<C & U> {
   ): ContextPromise<C & TResult1> {
     return new ContextPromise((resolve, reject) => {
       this.contextProvider.then((c: C) => {
-        const contextualResults = onfulfilled(c);
+        let contextualResults: PromiseBag<TResult1> | PromiseLike<TResult1>;
+        try {
+          contextualResults = onfulfilled(c);
+        } catch (e) {
+          reject(e);
+          return;
+        }
+
         if (isPromiseBag<TResult1>(contextualResults)) {
           const transformed = Object.keys(contextualResults).map(k => {
             return Promise.resolve(contextualResults[k]).then(tk => ({
@@ -86,7 +93,7 @@ class ContextPromise<C = {}, U = {}> implements PromiseLike<C & U> {
             .then(value => resolve(Object.assign({}, c, value)))
             .catch(reject);
         }
-      });
+      }, onrejected);
     });
   }
 
@@ -97,7 +104,15 @@ class ContextPromise<C = {}, U = {}> implements PromiseLike<C & U> {
   ): ContextPromise<C & { [k in K]: TResult1 }> {
     return new ContextPromise((resolve, reject) => {
       this.contextProvider.then((c: C) => {
-        Promise.resolve(onfulfilled(c))
+        let contextualResults;
+        try {
+          contextualResults = onfulfilled(c);
+        } catch (e) {
+          reject(e);
+          return;
+        }
+
+        Promise.resolve(contextualResults)
           .then((u: TResult1) => {
             // :KLUDGE: This function's type annotations rely on this one
             // :weird trick (`K extends string`). The `as any`s are here to
@@ -105,7 +120,7 @@ class ContextPromise<C = {}, U = {}> implements PromiseLike<C & U> {
             resolve(Object.assign({}, c, { [key as any]: u } as any));
           })
           .catch(reject);
-      }, reject);
+      }, onrejected);
     });
   }
 }
