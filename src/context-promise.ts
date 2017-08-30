@@ -78,7 +78,9 @@ class ContextPromise<C = {}, U = {}> implements PromiseLike<C & U> {
 
         if (isPromiseBag<TResult1>(contextualResults)) {
           const transformed = Object.keys(contextualResults).map(k => {
-            return Promise.resolve(contextualResults[k]).then(tk => ({
+            return Promise.resolve(
+              (contextualResults as PromiseBag<TResult1>)[k],
+            ).then(tk => ({
               [k]: tk,
             }));
           });

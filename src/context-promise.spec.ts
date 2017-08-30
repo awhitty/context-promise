@@ -133,7 +133,7 @@ describe('Error handling', () => {
   });
 
   it('should reject as second parameter to then', done => {
-    const p = ContextPromise.fromPromise(Promise.resolve({ phrase: 'yolo' }))
+    ContextPromise.fromPromise(Promise.resolve({ phrase: 'yolo' }))
       .then(c => {
         throw new Error('Arbitrary error');
       })
@@ -181,7 +181,7 @@ describe('Error handling', () => {
   it('should not fire subsequent thens', done => {
     const spy = jest.fn();
 
-    const p = ContextPromise.fromPromise(Promise.resolve({ phrase: 'yolo' }))
+    ContextPromise.fromPromise(Promise.resolve({ phrase: 'yolo' }))
       .then(c => ({
         noError: 'pleasantly fine',
         someError: Promise.reject(new Error('Arbitrary error')),
