@@ -12,7 +12,7 @@
     "build": "webpack --config build.webpack.config.js",
     "smoke:ts": "tsc --noEmit --pretty --project ./src/tsconfig.json",
     "test": "jest",
-    "watchtest": "jest --watch",
+    "watchtest": "jest --watch --coverage",
     "watch": "webpack --config build.webpack.config.js --watch"
   },
   "keywords": [],
@@ -38,6 +38,7 @@
       "js",
       "json"
     ],
+    "mapCoverage": true,
     "globals": {
       "ts-jest": {
         "tsConfigFile": "./src/tsconfig.json"
