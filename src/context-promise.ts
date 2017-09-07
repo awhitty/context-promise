@@ -9,8 +9,26 @@ function isPromiseBag<T>(obj: any): obj is PromiseBag<T> {
   return Object.getPrototypeOf(obj) === Object.prototype;
 }
 
+function bagToPromise<T>(bag: PromiseBag<T>): Promise<T> {
+  const transformed = Object.keys(bag).map(k => {
+    return Promise.resolve(bag[k]).then(result => ({
+      [k]: result,
+    }));
+  });
+
+  return Promise.all(transformed).then(values =>
+    Object.assign.apply(null, [{}, ...values]),
+  );
+}
+
 class ContextPromise<C = {}> implements PromiseLike<C> {
   contextProvider: PromiseLike<C>;
+
+  static fromBag<C = {}>(bag: PromiseBag<C>): ContextPromise<C> {
+    return new ContextPromise((resolve, reject) => {
+      bagToPromise(bag).then(resolve, reject);
+    });
+  }
 
   static fromPromise<C = {}>(promise: C | PromiseLike<C>): ContextPromise<C> {
     return new ContextPromise((resolve, reject) => {
