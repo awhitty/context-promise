@@ -9,7 +9,7 @@ function isPromiseBag<T>(obj: any): obj is PromiseBag<T> {
   return Object.getPrototypeOf(obj) === Object.prototype;
 }
 
-class ContextPromise<C = {}, U = {}> implements PromiseLike<C & U> {
+class ContextPromise<C = {}> implements PromiseLike<C> {
   contextProvider: PromiseLike<C>;
 
   static fromPromise<C = {}>(promise: C | PromiseLike<C>): ContextPromise<C> {
@@ -28,14 +28,14 @@ class ContextPromise<C = {}, U = {}> implements PromiseLike<C & U> {
   }
 
   /** Named */
-  then<K extends string, TResult1 = U, TResult2 = never>(
+  then<K extends string, TResult1, TResult2 = never>(
     key: K,
     onfulfilled: ((value: C) => TResult1 | PromiseLike<TResult1>),
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>),
   ): ContextPromise<C & { [k in K]: TResult1 }>;
 
   /** Bag or basic */
-  then<TResult1 = U, TResult2 = never>(
+  then<TResult1, TResult2 = never>(
     onfulfilled: (value: C) => PromiseBag<TResult1> | PromiseLike<TResult1>,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>),
   ): ContextPromise<C & TResult1>;
@@ -62,13 +62,13 @@ class ContextPromise<C = {}, U = {}> implements PromiseLike<C & U> {
     });
   }
 
-  private realThen<TResult1 = U, TResult2 = never>(
+  private realThen<TResult1, TResult2 = never>(
     onfulfilled: (value: C) => PromiseBag<TResult1> | PromiseLike<TResult1>,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>),
   ): ContextPromise<C & TResult1> {
     return new ContextPromise((resolve, reject) => {
       this.contextProvider.then((c: C) => {
-        let contextualResults: PromiseBag<TResult1> | PromiseLike<TResult1>;
+        let contextualResults;
         try {
           contextualResults = onfulfilled(c);
         } catch (e) {
@@ -99,7 +99,7 @@ class ContextPromise<C = {}, U = {}> implements PromiseLike<C & U> {
     });
   }
 
-  private keyedThen<K extends string, TResult1 = U, TResult2 = never>(
+  private keyedThen<K extends string, TResult1, TResult2 = never>(
     key: K,
     onfulfilled: ((value: C) => TResult1 | PromiseLike<TResult1>),
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>),
