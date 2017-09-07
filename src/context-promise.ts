@@ -127,8 +127,8 @@ class ContextPromise<C = {}> implements PromiseLike<C> {
         Promise.resolve(contextualResults)
           .then((u: TResult1) => {
             // :KLUDGE: This function's type annotations rely on this one
-            // :weird trick (`K extends string`). The `as any`s are here to
-            // :quiet the compiler.
+            //   weird trick (`K extends string`). The `as any`s are here
+            //   to quiet the compiler.
             resolve(Object.assign({}, c, { [key as any]: u } as any));
           })
           .catch(reject);
