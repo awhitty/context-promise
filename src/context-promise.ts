@@ -95,17 +95,9 @@ class ContextPromise<C = {}> implements PromiseLike<C> {
         }
 
         if (isPromiseBag<TResult1>(contextualResults)) {
-          const transformed = Object.keys(contextualResults).map(k => {
-            return Promise.resolve(
-              (contextualResults as PromiseBag<TResult1>)[k],
-            ).then(tk => ({
-              [k]: tk,
-            }));
-          });
-
-          Promise.all(transformed)
-            .then(values => {
-              resolve(Object.assign.apply(null, [{}, c, ...values]));
+          bagToPromise(contextualResults)
+            .then(resolvedBag => {
+              resolve(Object.assign({}, c, resolvedBag));
             })
             .catch(reject);
         } else {
