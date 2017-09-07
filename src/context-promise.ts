@@ -58,7 +58,7 @@ class ContextPromise<C = {}> implements PromiseLike<C> {
 
   /** Bag or basic */
   then<TResult1, TResult2 = never>(
-    onfulfilled: (value: C) => PromiseBag<TResult1> | PromiseLike<TResult1>,
+    onfulfilled: (value: C) => PromiseBag<TResult1> | PromiseLike<TResult1> | void,
     onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>),
   ): ContextPromise<C & TResult1>;
 
