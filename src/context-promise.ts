@@ -22,7 +22,7 @@ function bagToPromise<T>(bag: PromiseBag<T>): Promise<T> {
 }
 
 class ContextPromise<C = {}> implements PromiseLike<C> {
-  contextProvider: PromiseLike<C>;
+  private contextProvider: PromiseLike<C>;
 
   static fromBag<C = {}>(bag: PromiseBag<C>): ContextPromise<C> {
     return new ContextPromise((resolve, reject) => {
@@ -34,6 +34,10 @@ class ContextPromise<C = {}> implements PromiseLike<C> {
     return new ContextPromise((resolve, reject) => {
       Promise.resolve(promise).then(resolve, reject);
     });
+  }
+
+  static toPromise<C = {}>(contextPromise: ContextPromise<C>): PromiseLike<C> {
+    return contextPromise.contextProvider;
   }
 
   constructor(
@@ -66,18 +70,8 @@ class ContextPromise<C = {}> implements PromiseLike<C> {
     }
   }
 
-  tap(onfulfilled: (value: C) => void): ContextPromise<C> {
-    return new ContextPromise((resolve, reject) => {
-      this.contextProvider.then((c: C) => {
-        try {
-          onfulfilled(c);
-        } catch (e) {
-          reject(e);
-          return;
-        }
-        resolve(c);
-      }, reject);
-    });
+  toPromise(): PromiseLike<C> {
+    return ContextPromise.toPromise(this);
   }
 
   private realThen<TResult1, TResult2 = never>(
